@@ -1,7 +1,7 @@
 {
-  "name": "football-prediction-game",
+  "name": "you-know-nothing-fc",
   "version": "1.0.0",
-  "description": "A football score prediction game with leaderboard",
+  "description": "You Know Nothing FC - A snarky football score prediction game",
   "private": true,
   "scripts": {
     "dev": "vercel dev",

@@ -1,6 +1,6 @@
-# Football Score Prediction Game
+# You Know Nothing FC ⚽
 
-A web-based football prediction game where players predict match scores and compete on a leaderboard.
+A snarky football prediction game where players prove they know nothing about football by predicting match scores and competing on a leaderboard.
 
 ## Features
 
