@@ -74,6 +74,46 @@
         </main>
     </div>
 
+    <!-- Edit Game Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <h2>Edit Game</h2>
+            <form id="edit-form">
+                <div class="form-group">
+                    <label for="edit-home-team">Home Team</label>
+                    <input
+                        type="text"
+                        id="edit-home-team"
+                        required
+                        maxlength="100"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="edit-away-team">Away Team</label>
+                    <input
+                        type="text"
+                        id="edit-away-team"
+                        required
+                        maxlength="100"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="edit-kickoff-datetime">Kickoff Date & Time</label>
+                    <input
+                        type="datetime-local"
+                        id="edit-kickoff-datetime"
+                        required
+                    >
+                </div>
+                <div id="edit-message" style="margin-top: 16px;"></div>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button type="submit" style="flex: 1;">Update Game</button>
+                    <button type="button" class="btn-secondary" id="cancel-edit-btn" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Enter Score Modal -->
     <div id="score-modal" class="modal">
         <div class="modal-content">

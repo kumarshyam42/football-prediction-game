@@ -1,6 +1,7 @@
 // Admin key
 let adminKey = null;
 let currentScoreGame = null;
+let currentEditGame = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('create-game-form').addEventListener('submit', handleCreateGame);
   document.getElementById('score-form').addEventListener('submit', handleSaveScore);
   document.getElementById('cancel-score-btn').addEventListener('click', hideScoreModal);
+  document.getElementById('edit-form').addEventListener('submit', handleUpdateGame);
+  document.getElementById('cancel-edit-btn').addEventListener('click', hideEditModal);
 });
 
 // Show auth error
@@ -74,6 +77,13 @@ async function loadGames() {
               ` : ''}
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button
+                class="btn-secondary"
+                style="min-width: auto; padding: 8px 16px;"
+                onclick="showEditModal(${game.id}, '${escapeHtml(game.home_team)}', '${escapeHtml(game.away_team)}', '${game.kickoff_datetime}')"
+              >
+                Edit
+              </button>
               ${!hasScore ? `
                 <button
                   class="btn-secondary"
@@ -243,6 +253,68 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Show edit modal
+function showEditModal(gameId, homeTeam, awayTeam, kickoffDatetime) {
+  currentEditGame = gameId;
+
+  // Format datetime for input (needs YYYY-MM-DDTHH:MM format)
+  const date = new Date(kickoffDatetime);
+  const formatted = date.toISOString().slice(0, 16);
+
+  document.getElementById('edit-home-team').value = homeTeam;
+  document.getElementById('edit-away-team').value = awayTeam;
+  document.getElementById('edit-kickoff-datetime').value = formatted;
+  document.getElementById('edit-modal').classList.add('active');
+}
+
+// Hide edit modal
+function hideEditModal() {
+  document.getElementById('edit-modal').classList.remove('active');
+  document.getElementById('edit-form').reset();
+  document.getElementById('edit-message').innerHTML = '';
+  currentEditGame = null;
+}
+
+// Handle update game
+async function handleUpdateGame(e) {
+  e.preventDefault();
+
+  if (!currentEditGame) return;
+
+  const homeTeam = document.getElementById('edit-home-team').value.trim();
+  const awayTeam = document.getElementById('edit-away-team').value.trim();
+  const kickoffDatetime = document.getElementById('edit-kickoff-datetime').value;
+  const messageEl = document.getElementById('edit-message');
+
+  try {
+    const response = await fetch(`/api/games/${currentEditGame}/update?key=${adminKey}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        home_team: homeTeam,
+        away_team: awayTeam,
+        kickoff_datetime: kickoffDatetime
+      })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      messageEl.innerHTML = '<div class="success-message">Game updated successfully!</div>';
+      setTimeout(() => {
+        hideEditModal();
+        loadGames(); // Reload games list
+      }, 1500);
+    } else {
+      messageEl.innerHTML = `<div class="error-message">${data.error}</div>`;
+    }
+  } catch (error) {
+    console.error('Error updating game:', error);
+    messageEl.innerHTML = '<div class="error-message">Failed to update game. Please try again.</div>';
+  }
+}
+
 // Make functions globally available
 window.showScoreModal = showScoreModal;
+window.showEditModal = showEditModal;
 window.deleteGame = deleteGame;
