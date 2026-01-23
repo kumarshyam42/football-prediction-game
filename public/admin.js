@@ -258,9 +258,16 @@ function escapeHtml(text) {
 function showEditModal(gameId, homeTeam, awayTeam, kickoffDatetime) {
   currentEditGame = gameId;
 
-  // Format datetime for input (needs YYYY-MM-DDTHH:MM format)
+  // Format datetime for input (needs YYYY-MM-DDTHH:MM format in LOCAL timezone)
   const date = new Date(kickoffDatetime);
-  const formatted = date.toISOString().slice(0, 16);
+
+  // Convert to local timezone for display in datetime-local input
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const formatted = `${year}-${month}-${day}T${hours}:${minutes}`;
 
   document.getElementById('edit-home-team').value = homeTeam;
   document.getElementById('edit-away-team').value = awayTeam;
