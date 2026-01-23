@@ -119,26 +119,34 @@ async function loadGame() {
     const hasScore = currentGame.final_home_score !== null && currentGame.final_away_score !== null;
 
     let html = `
-      <h2>${escapeHtml(currentGame.home_team)} vs ${escapeHtml(currentGame.away_team)}</h2>
+      <h2>⚽ ${escapeHtml(currentGame.home_team)} vs ${escapeHtml(currentGame.away_team)}</h2>
       <p style="color: var(--text-muted); margin-top: 8px;">
-        ${formatDateTime(currentGame.kickoff_datetime)}
+        📅 ${formatDateTime(currentGame.kickoff_datetime)}
       </p>
     `;
 
     if (hasScore) {
       html += `
-        <div style="font-size: 48px; font-weight: 700; color: var(--success); margin-top: 20px; font-variant-numeric: tabular-nums;">
+        <div class="score-display" style="font-size: 56px; margin-top: 24px;">
           ${currentGame.final_home_score} - ${currentGame.final_away_score}
         </div>
-        <p style="color: var(--text-secondary); margin-top: 8px;">Final Score</p>
+        <div style="margin-top: 12px;">
+          <span class="badge badge-success">✓ Final Score</span>
+        </div>
       `;
     } else if (!isPastKickoff) {
       html += `
         <div style="margin-top: 16px;">
-          <span class="badge badge-warning">Kickoff in ${getCountdown(currentGame.kickoff_datetime)}</span>
+          <span class="badge badge-warning countdown-timer" data-kickoff="${currentGame.kickoff_datetime}">⏱️ Kickoff in ${getCountdown(currentGame.kickoff_datetime)}</span>
         </div>
       `;
       startCountdown();
+    } else {
+      html += `
+        <div style="margin-top: 16px;">
+          <span class="badge badge-danger">🔒 Predictions Locked</span>
+        </div>
+      `;
     }
 
     container.innerHTML = html;
@@ -188,11 +196,20 @@ async function loadPredictions() {
         );
       }
 
+      const isCurrentPlayer = currentPlayer && pred.player_name === currentPlayer.name;
       html += `
-        <div class="prediction-item">
-          <div class="player-name">${escapeHtml(pred.player_name)}</div>
-          <div class="score">${pred.predicted_home_score} - ${pred.predicted_away_score}</div>
-          ${points !== null ? `<div class="points">${points} pts</div>` : ''}
+        <div class="prediction-item" style="${isCurrentPlayer ? 'border: 2px solid var(--accent-primary);' : ''}">
+          <div>
+            <div class="player-name" style="display: flex; align-items: center; gap: 8px;">
+              ${isCurrentPlayer ? '👤' : ''}
+              ${escapeHtml(pred.player_name)}
+              ${isCurrentPlayer ? '<span class="badge badge-success" style="font-size: 11px; padding: 2px 8px;">You</span>' : ''}
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="score" style="font-size: 20px; font-weight: 700;">${pred.predicted_home_score} - ${pred.predicted_away_score}</div>
+            ${points !== null ? `<div class="points-display" style="font-size: 16px;">${points} pts</div>` : ''}
+          </div>
         </div>
       `;
 

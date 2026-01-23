@@ -109,15 +109,19 @@ async function loadLeaderboard() {
           </tr>
         </thead>
         <tbody>
-          ${data.leaderboard.map(player => `
+          ${data.leaderboard.map(player => {
+            const rankClass = player.rank <= 3 ? `rank-${player.rank}` : 'rank-other';
+            const rankEmoji = player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : '';
+            return `
             <tr>
-              <td><strong>${player.rank}</strong></td>
-              <td>${escapeHtml(player.player_name)}</td>
-              <td>${player.total_points}</td>
+              <td><span class="rank-badge ${rankClass}">${rankEmoji || player.rank}</span></td>
+              <td style="font-weight: 600;">${escapeHtml(player.player_name)}</td>
+              <td><span class="points-display">${player.total_points} pts</span></td>
               <td>${player.games_predicted}</td>
               <td><strong>${player.points_per_prediction.toFixed(2)}</strong></td>
             </tr>
-          `).join('')}
+          `;
+          }).join('')}
         </tbody>
       </table>
     `;
@@ -176,10 +180,10 @@ function displayUpcomingGames(games) {
     <div class="games-grid">
       ${games.map(game => `
         <div class="game-card" onclick="window.location.href='/game.html?id=${game.id}'">
-          <div class="teams">${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}</div>
-          <div class="kickoff-time">${formatDateTime(game.kickoff_datetime)}</div>
-          <div class="countdown" data-kickoff="${game.kickoff_datetime}">
-            ${getCountdown(game.kickoff_datetime)}
+          <div class="teams">⚽ ${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}</div>
+          <div class="kickoff-time">📅 ${formatDateTime(game.kickoff_datetime)}</div>
+          <div class="countdown countdown-timer" data-kickoff="${game.kickoff_datetime}">
+            ⏱️ ${getCountdown(game.kickoff_datetime)}
           </div>
         </div>
       `).join('')}
@@ -205,10 +209,13 @@ function displayCompletedGames(games) {
     <div class="games-grid">
       ${recent.map(game => `
         <div class="game-card" onclick="window.location.href='/game.html?id=${game.id}'">
-          <div class="teams">${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}</div>
-          <div class="kickoff-time">${formatDateTime(game.kickoff_datetime)}</div>
-          <div class="final-score">
+          <div class="teams">⚽ ${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}</div>
+          <div class="kickoff-time">📅 ${formatDateTime(game.kickoff_datetime)}</div>
+          <div class="final-score score-display">
             ${game.final_home_score} - ${game.final_away_score}
+          </div>
+          <div style="margin-top: 8px;">
+            <span class="badge badge-success">✓ Final</span>
           </div>
         </div>
       `).join('')}
