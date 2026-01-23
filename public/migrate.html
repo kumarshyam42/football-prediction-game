@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Database Migration - You Know Nothing FC</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 Database Migration</h1>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>⚙️ Run Database Migration</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    This will update the database schema to ensure all columns exist.
+                </p>
+
+                <div id="auth-error" style="display: none;">
+                    <div class="error-message">
+                        ❌ Admin key required. Please add ?key=YOUR_ADMIN_KEY to the URL.
+                    </div>
+                </div>
+
+                <div id="migrate-controls" style="display: none;">
+                    <button id="migrate-btn" class="btn" style="width: 100%;">
+                        🚀 Run Migration
+                    </button>
+
+                    <div id="result-message" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let adminKey = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get admin key from URL
+            const params = new URLSearchParams(window.location.search);
+            adminKey = params.get('key');
+
+            if (!adminKey) {
+                document.getElementById('auth-error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('migrate-controls').style.display = 'block';
+            document.getElementById('migrate-btn').addEventListener('click', handleMigration);
+        });
+
+        async function handleMigration() {
+            const btn = document.getElementById('migrate-btn');
+            const messageEl = document.getElementById('result-message');
+
+            btn.disabled = true;
+            btn.textContent = 'Running migration...';
+            messageEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/admin/migrate?key=${adminKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageEl.innerHTML = `
+                        <div class="success-message">
+                            <h3 style="margin-bottom: 12px;">✅ Migration Complete!</h3>
+                            <p>${data.message}</p>
+                            <p style="margin-top: 16px;">
+                                You can now <a href="/" style="color: var(--accent-primary); text-decoration: underline;">return to the home page</a> and try submitting predictions again.
+                            </p>
+                        </div>
+                    `;
+                    btn.textContent = '✓ Migration Complete';
+                } else {
+                    messageEl.innerHTML = `
+                        <div class="error-message">
+                            ❌ Error: ${data.error || data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Run Migration';
+                }
+            } catch (error) {
+                console.error('Migration error:', error);
+                messageEl.innerHTML = `
+                    <div class="error-message">
+                        ❌ Failed to run migration. Please try again.
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🚀 Run Migration';
+            }
+        }
+    </script>
+</body>
+</html>
