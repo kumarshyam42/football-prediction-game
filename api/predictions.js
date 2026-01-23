@@ -64,8 +64,8 @@ module.exports = async function handler(req, res) {
 
       // Upsert prediction (insert or update if exists)
       const { rows: prediction } = await sql`
-        INSERT INTO predictions (player_id, game_id, predicted_home_score, predicted_away_score, updated_at)
-        VALUES (${player_id}, ${game_id}, ${predicted_home_score}, ${predicted_away_score}, CURRENT_TIMESTAMP)
+        INSERT INTO predictions (player_id, game_id, predicted_home_score, predicted_away_score)
+        VALUES (${player_id}, ${game_id}, ${predicted_home_score}, ${predicted_away_score})
         ON CONFLICT (player_id, game_id)
         DO UPDATE SET
           predicted_home_score = ${predicted_home_score},
