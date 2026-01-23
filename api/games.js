@@ -40,6 +40,16 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      // Validate that kickoff time is in the future
+      const kickoffDate = new Date(kickoff_datetime);
+      const now = new Date();
+
+      if (kickoffDate <= now) {
+        return res.status(400).json({
+          error: 'Kickoff time must be in the future'
+        });
+      }
+
       const { rows: newGame } = await sql`
         INSERT INTO games (home_team, away_team, kickoff_datetime)
         VALUES (${home_team.trim()}, ${away_team.trim()}, ${kickoff_datetime})
