@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Database Cleanup - Football Prediction Game</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧹 Database Cleanup</h1>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>⚠️ Clean Database</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    This will remove all test data from the database. This action cannot be undone.
+                </p>
+
+                <div id="auth-error" style="display: none;">
+                    <div class="error-message">
+                        ❌ Admin key required. Please add ?key=YOUR_ADMIN_KEY to the URL.
+                    </div>
+                </div>
+
+                <div id="cleanup-controls" style="display: none;">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="checkbox" id="keep-players" style="width: auto; min-height: auto;">
+                            <span>Keep players (only delete games and predictions)</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button id="cleanup-btn" class="btn-danger" style="flex: 1;">
+                            🗑️ Clean Database
+                        </button>
+                        <button onclick="window.location.href='/'" class="btn-secondary" style="flex: 1;">
+                            Cancel
+                        </button>
+                    </div>
+
+                    <div id="result-message" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let adminKey = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get admin key from URL
+            const params = new URLSearchParams(window.location.search);
+            adminKey = params.get('key');
+
+            if (!adminKey) {
+                document.getElementById('auth-error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('cleanup-controls').style.display = 'block';
+            document.getElementById('cleanup-btn').addEventListener('click', handleCleanup);
+        });
+
+        async function handleCleanup() {
+            const keepPlayers = document.getElementById('keep-players').checked;
+            const btn = document.getElementById('cleanup-btn');
+            const messageEl = document.getElementById('result-message');
+
+            // Confirm action
+            const confirmMessage = keepPlayers
+                ? 'Are you sure you want to delete all games and predictions?'
+                : 'Are you sure you want to delete ALL data (games, predictions, and players)?';
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Cleaning...';
+            messageEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/admin/cleanup?key=${adminKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keepPlayers })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageEl.innerHTML = `
+                        <div class="success-message">
+                            <h3 style="margin-bottom: 12px;">✅ Cleanup Complete!</h3>
+                            <p style="margin-bottom: 8px;"><strong>Deleted:</strong></p>
+                            <ul style="margin-left: 20px;">
+                                <li>${data.deleted.predictions} predictions</li>
+                                <li>${data.deleted.games} games</li>
+                                <li>${data.deleted.players} players</li>
+                            </ul>
+                            <p style="margin-top: 16px;">
+                                <a href="/" style="color: var(--accent-primary); text-decoration: underline;">Return to Home</a>
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    messageEl.innerHTML = `
+                        <div class="error-message">
+                            ❌ Error: ${data.error}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🗑️ Clean Database';
+                }
+            } catch (error) {
+                console.error('Cleanup error:', error);
+                messageEl.innerHTML = `
+                    <div class="error-message">
+                        ❌ Failed to clean database. Please try again.
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🗑️ Clean Database';
+            }
+        }
+    </script>
+</body>
+</html>
