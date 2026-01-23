@@ -122,8 +122,17 @@ async function handleCreateGame(e) {
 
   const homeTeam = document.getElementById('home-team').value.trim();
   const awayTeam = document.getElementById('away-team').value.trim();
-  const kickoffDatetime = document.getElementById('kickoff-datetime').value;
+  const kickoffDatetimeLocal = document.getElementById('kickoff-datetime').value;
   const messageEl = document.getElementById('create-message');
+
+  // Convert local datetime string to UTC ISO string
+  const [datePart, timePart] = kickoffDatetimeLocal.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
+
+  // Create date using local timezone
+  const localDate = new Date(year, month - 1, day, hours, minutes);
+  const kickoffDatetime = localDate.toISOString();
 
   try {
     const response = await fetch('/api/games?key=' + adminKey, {
@@ -236,15 +245,22 @@ async function deleteGame(gameId, gameName) {
 // Format date and time in user's timezone
 function formatDateTime(datetime) {
   const date = new Date(datetime);
-  return date.toLocaleString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
+
+  // Manual formatting to avoid toLocaleString timezone issues
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const dayName = days[date.getDay()];
+  const monthName = months[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+
+  return `${dayName}, ${monthName} ${day}, ${year}, ${hours}:${minutes} ${ampm}`;
 }
 
 // Escape HTML to prevent XSS
@@ -291,8 +307,18 @@ async function handleUpdateGame(e) {
 
   const homeTeam = document.getElementById('edit-home-team').value.trim();
   const awayTeam = document.getElementById('edit-away-team').value.trim();
-  const kickoffDatetime = document.getElementById('edit-kickoff-datetime').value;
+  const kickoffDatetimeLocal = document.getElementById('edit-kickoff-datetime').value;
   const messageEl = document.getElementById('edit-message');
+
+  // Convert local datetime string to UTC ISO string
+  // Parse the datetime-local value and explicitly interpret as local time
+  const [datePart, timePart] = kickoffDatetimeLocal.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
+
+  // Create date using local timezone (this constructor interprets values as local time)
+  const localDate = new Date(year, month - 1, day, hours, minutes);
+  const kickoffDatetime = localDate.toISOString();
 
   try {
     const response = await fetch(`/api/games/${currentEditGame}/update?key=${adminKey}`, {
