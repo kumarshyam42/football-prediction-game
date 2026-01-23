@@ -1,6 +1,6 @@
-import { sql } from '@vercel/postgres';
+const { sql } = require('@vercel/postgres');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       // Get all predictions for a game
@@ -83,6 +83,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Predictions API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
   }
-}
+};

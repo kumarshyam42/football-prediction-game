@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+const { sql } = require('@vercel/postgres');
 
 // Helper function to check admin authentication
 function isAdmin(req) {
@@ -7,7 +7,7 @@ function isAdmin(req) {
   return adminSecret && providedKey === adminSecret;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   try {
     const { id } = req.query;
 
@@ -55,6 +55,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Update score API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', message: error.message });
   }
-}
+};
