@@ -63,6 +63,8 @@ module.exports = async function handler(req, res) {
       }
 
       // Upsert prediction (insert or update if exists)
+      console.log('Attempting to upsert prediction:', { player_id, game_id, predicted_home_score, predicted_away_score });
+
       const { rows: prediction } = await sql`
         INSERT INTO predictions (player_id, game_id, predicted_home_score, predicted_away_score)
         VALUES (${player_id}, ${game_id}, ${predicted_home_score}, ${predicted_away_score})
@@ -74,6 +76,7 @@ module.exports = async function handler(req, res) {
         RETURNING id, player_id, game_id, predicted_home_score, predicted_away_score, created_at, updated_at
       `;
 
+      console.log('Prediction upserted successfully:', prediction[0]);
       return res.status(200).json({ prediction: prediction[0] });
 
     } else {
@@ -83,6 +86,11 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Predictions API error:', error);
-    return res.status(500).json({ error: 'Internal server error', message: error.message });
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      details: error.toString()
+    });
   }
 };
