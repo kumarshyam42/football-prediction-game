@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>Database Setup - You Know Nothing FC</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 Database Setup</h1>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main>
+            <div class="card">
+                <h2>⚙️ Initialize Database Schema</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    This will create or verify all database tables and indexes.
+                </p>
+
+                <div id="auth-error" style="display: none;">
+                    <div class="error-message">
+                        ❌ Admin key required. Please add ?key=YOUR_ADMIN_KEY to the URL.
+                    </div>
+                </div>
+
+                <div id="setup-controls" style="display: none;">
+                    <button id="setup-btn" class="btn" style="width: 100%;">
+                        🚀 Run Setup
+                    </button>
+
+                    <div id="result-message" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let adminKey = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get admin key from URL
+            const params = new URLSearchParams(window.location.search);
+            adminKey = params.get('key');
+
+            if (!adminKey) {
+                document.getElementById('auth-error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('setup-controls').style.display = 'block';
+            document.getElementById('setup-btn').addEventListener('click', handleSetup);
+        });
+
+        async function handleSetup() {
+            const btn = document.getElementById('setup-btn');
+            const messageEl = document.getElementById('result-message');
+
+            btn.disabled = true;
+            btn.textContent = 'Running setup...';
+            messageEl.innerHTML = '';
+
+            try {
+                const response = await fetch(`/api/admin/setup?key=${adminKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageEl.innerHTML = `
+                        <div class="success-message">
+                            <h3 style="margin-bottom: 12px;">✅ Setup Complete!</h3>
+                            <p>${data.message}</p>
+                            <p style="margin-top: 16px;">
+                                You can now <a href="/admin.html?key=${adminKey}" style="color: var(--accent-primary); text-decoration: underline;">go to admin panel</a> to create games.
+                            </p>
+                        </div>
+                    `;
+                    btn.textContent = '✓ Setup Complete';
+                } else {
+                    messageEl.innerHTML = `
+                        <div class="error-message">
+                            ❌ Error: ${data.error || data.message}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Run Setup';
+                }
+            } catch (error) {
+                console.error('Setup error:', error);
+                messageEl.innerHTML = `
+                    <div class="error-message">
+                        ❌ Failed to run setup. Please try again.
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = '🚀 Run Setup';
+            }
+        }
+    </script>
+</body>
+</html>
