@@ -102,7 +102,8 @@ async function loadGame() {
   const container = document.getElementById('game-info-container');
 
   try {
-    const response = await fetch('/api/games');
+    // Add cache-busting parameter to ensure fresh data
+    const response = await fetch('/api/games?' + new Date().getTime());
     const data = await response.json();
 
     currentGame = data.games.find(g => g.id == gameId);

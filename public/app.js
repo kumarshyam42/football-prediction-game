@@ -132,7 +132,8 @@ async function loadLeaderboard() {
 // Load games
 async function loadGames() {
   try {
-    const response = await fetch('/api/games');
+    // Add cache-busting parameter to ensure fresh data
+    const response = await fetch('/api/games?' + new Date().getTime());
     const data = await response.json();
 
     const now = new Date();
