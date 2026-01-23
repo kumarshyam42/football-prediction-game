@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a202c">
+    <title>Game Details - Football Prediction Game</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ Football Prediction Game</h1>
+            <div class="player-info">
+                <span id="player-display">Welcome!</span>
+                <button id="change-name-btn">Change Name</button>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Game Info -->
+            <div class="card">
+                <div id="game-info-container">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+            </div>
+
+            <!-- Prediction Form -->
+            <div class="card" id="prediction-form-card" style="display: none;">
+                <h2>Your Prediction</h2>
+                <form id="prediction-form">
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center;">
+                        <div class="form-group" style="margin: 0;">
+                            <label id="home-team-label">Home</label>
+                            <input
+                                type="number"
+                                id="home-score"
+                                min="0"
+                                max="20"
+                                required
+                                placeholder="0"
+                            >
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--text-muted); padding-top: 20px;">-</div>
+                        <div class="form-group" style="margin: 0;">
+                            <label id="away-team-label">Away</label>
+                            <input
+                                type="number"
+                                id="away-score"
+                                min="0"
+                                max="20"
+                                required
+                                placeholder="0"
+                            >
+                        </div>
+                    </div>
+                    <div id="form-message" style="margin-top: 16px;"></div>
+                    <button type="submit" style="margin-top: 16px; width: 100%;">Submit Prediction</button>
+                </form>
+            </div>
+
+            <!-- Locked Message -->
+            <div class="card" id="locked-message" style="display: none;">
+                <p style="color: var(--text-muted); text-align: center;">
+                    🔒 Predictions are locked. Kickoff has passed.
+                </p>
+            </div>
+
+            <!-- All Predictions -->
+            <div class="card">
+                <h2>All Predictions</h2>
+                <div id="predictions-container">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Player Name Modal -->
+    <div id="player-modal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Your Name</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Choose a display name to get started</p>
+            <form id="player-form">
+                <div class="form-group">
+                    <label for="player-name">Your Name</label>
+                    <input
+                        type="text"
+                        id="player-name"
+                        placeholder="Enter your name"
+                        required
+                        autofocus
+                        maxlength="50"
+                    >
+                </div>
+                <button type="submit">Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/game-detail.js"></script>
+</body>
+</html>

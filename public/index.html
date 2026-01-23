@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a202c">
+    <title>Football Prediction Game</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ Football Prediction Game</h1>
+            <div class="player-info">
+                <span id="player-display">Welcome!</span>
+                <button id="change-name-btn">Change Name</button>
+            </div>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Leaderboard -->
+            <div class="card">
+                <h2>🏆 Leaderboard</h2>
+                <div id="leaderboard-container">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+            </div>
+
+            <!-- Upcoming Games -->
+            <div class="card">
+                <h2>📅 Upcoming Games</h2>
+                <div id="upcoming-games-container">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+            </div>
+
+            <!-- Recent Completed Games -->
+            <div class="card">
+                <h2>✅ Recent Results</h2>
+                <div id="completed-games-container">
+                    <div class="skeleton skeleton-line"></div>
+                    <div class="skeleton skeleton-line"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Player Name Modal -->
+    <div id="player-modal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Your Name</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Choose a display name to get started</p>
+            <form id="player-form">
+                <div class="form-group">
+                    <label for="player-name">Your Name</label>
+                    <input
+                        type="text"
+                        id="player-name"
+                        placeholder="Enter your name"
+                        required
+                        autofocus
+                        maxlength="50"
+                    >
+                </div>
+                <button type="submit">Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

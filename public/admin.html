@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a202c">
+    <title>Admin Panel - Football Prediction Game</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Admin Panel</h1>
+            <nav>
+                <a href="/">Home</a>
+            </nav>
+        </header>
+
+        <main>
+            <div id="auth-error" class="card" style="display: none;">
+                <div class="error-message">
+                    <strong>Unauthorized</strong>
+                    <p>Invalid or missing admin key. Please check the URL and try again.</p>
+                </div>
+            </div>
+
+            <div id="admin-content" style="display: none;">
+                <!-- Create Game Form -->
+                <div class="card">
+                    <h2>Create New Game</h2>
+                    <form id="create-game-form">
+                        <div class="form-group">
+                            <label for="home-team">Home Team</label>
+                            <input
+                                type="text"
+                                id="home-team"
+                                placeholder="e.g., Manchester United"
+                                required
+                                maxlength="100"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="away-team">Away Team</label>
+                            <input
+                                type="text"
+                                id="away-team"
+                                placeholder="e.g., Liverpool"
+                                required
+                                maxlength="100"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="kickoff-datetime">Kickoff Date & Time</label>
+                            <input
+                                type="datetime-local"
+                                id="kickoff-datetime"
+                                required
+                            >
+                        </div>
+                        <div id="create-message"></div>
+                        <button type="submit">Create Game</button>
+                    </form>
+                </div>
+
+                <!-- Games List -->
+                <div class="card">
+                    <h2>All Games</h2>
+                    <div id="games-list-container">
+                        <div class="skeleton skeleton-line"></div>
+                        <div class="skeleton skeleton-line"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Enter Score Modal -->
+    <div id="score-modal" class="modal">
+        <div class="modal-content">
+            <h2>Enter Final Score</h2>
+            <p id="score-modal-teams" style="color: var(--text-secondary); margin-bottom: 20px;"></p>
+            <form id="score-form">
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center;">
+                    <div class="form-group" style="margin: 0;">
+                        <label id="score-home-label">Home</label>
+                        <input
+                            type="number"
+                            id="score-home"
+                            min="0"
+                            max="20"
+                            required
+                            placeholder="0"
+                        >
+                    </div>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--text-muted); padding-top: 20px;">-</div>
+                    <div class="form-group" style="margin: 0;">
+                        <label id="score-away-label">Away</label>
+                        <input
+                            type="number"
+                            id="score-away"
+                            min="0"
+                            max="20"
+                            required
+                            placeholder="0"
+                        >
+                    </div>
+                </div>
+                <div id="score-message" style="margin-top: 16px;"></div>
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
+                    <button type="submit" style="flex: 1;">Save Score</button>
+                    <button type="button" class="btn-secondary" id="cancel-score-btn" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/admin.js"></script>
+</body>
+</html>

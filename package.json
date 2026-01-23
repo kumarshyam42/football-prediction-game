@@ -1,0 +1,17 @@
+{
+  "name": "football-prediction-game",
+  "version": "1.0.0",
+  "description": "A football score prediction game with leaderboard",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
