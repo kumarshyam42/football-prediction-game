@@ -195,7 +195,13 @@ function displayUpcomingGames(games) {
   const container = document.getElementById('upcoming-games-container');
 
   if (games.length === 0) {
-    container.innerHTML = '<div class="empty-state"><p>No upcoming games</p></div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon empty-state-calendar"></div>
+        <p class="empty-state-title">The pitch is quiet</p>
+        <span class="empty-state-subtitle">Check back soon for upcoming fixtures</span>
+      </div>
+    `;
     return;
   }
 
@@ -234,7 +240,13 @@ function displayCompletedGames(games) {
   const container = document.getElementById('completed-games-container');
 
   if (games.length === 0) {
-    container.innerHTML = '<div class="empty-state"><p>No completed games yet</p></div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon empty-state-whistle"></div>
+        <p class="empty-state-title">No final whistles yet</p>
+        <span class="empty-state-subtitle">Results will appear here after games finish</span>
+      </div>
+    `;
     return;
   }
 

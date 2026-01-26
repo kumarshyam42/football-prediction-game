@@ -169,7 +169,13 @@ async function loadPredictions() {
     const data = await response.json();
 
     if (data.predictions.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>No predictions yet</p></div>';
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon empty-state-target"></div>
+          <p class="empty-state-title">Be the first to call it</p>
+          <span class="empty-state-subtitle">Your prediction could be the one to beat</span>
+        </div>
+      `;
       return;
     }
 
