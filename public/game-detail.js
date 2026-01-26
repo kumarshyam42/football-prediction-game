@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set up event listeners
   document.getElementById('player-form').addEventListener('submit', handlePlayerSubmit);
   document.getElementById('prediction-form').addEventListener('submit', handlePredictionSubmit);
+
+  // Set up score button listeners
+  setupScoreButtons();
 });
 
 // Check if player name exists in localStorage
@@ -232,6 +235,10 @@ async function handlePredictionSubmit(e) {
   const homeScore = parseInt(document.getElementById('home-score').value);
   const awayScore = parseInt(document.getElementById('away-score').value);
   const messageEl = document.getElementById('form-message');
+  const submitBtn = document.getElementById('submit-prediction-btn');
+
+  // Disable button during submission
+  submitBtn.disabled = true;
 
   try {
     const response = await fetch('/api/predictions', {
@@ -248,17 +255,26 @@ async function handlePredictionSubmit(e) {
     const data = await response.json();
 
     if (response.ok) {
-      messageEl.innerHTML = '<div class="success-message">Prediction saved!</div>';
+      // Show success animation on button
+      submitBtn.classList.add('success');
+      messageEl.innerHTML = '<div class="success-message">Prediction locked in!</div>';
+
       setTimeout(() => {
+        submitBtn.classList.remove('success');
         messageEl.innerHTML = '';
       }, 3000);
+
       loadPredictions(); // Reload to show updated prediction
     } else {
       messageEl.innerHTML = `<div class="error-message">${data.error}</div>`;
+      // Shake the message on error
+      messageEl.querySelector('.error-message')?.classList.add('shake');
     }
   } catch (error) {
     console.error('Error saving prediction:', error);
     messageEl.innerHTML = '<div class="error-message">Failed to save prediction. Please try again.</div>';
+  } finally {
+    submitBtn.disabled = false;
   }
 }
 
@@ -346,4 +362,39 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Set up score increment/decrement buttons
+function setupScoreButtons() {
+  document.querySelectorAll('.score-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+      if (!input) return;
+
+      let value = parseInt(input.value) || 0;
+
+      if (btn.classList.contains('score-btn-plus')) {
+        value = Math.min(value + 1, 20);
+      } else if (btn.classList.contains('score-btn-minus')) {
+        value = Math.max(value - 1, 0);
+      }
+
+      input.value = value;
+
+      // Trigger pulse animation
+      input.classList.remove('changed');
+      void input.offsetWidth; // Force reflow to restart animation
+      input.classList.add('changed');
+    });
+  });
+
+  // Also add pulse animation on manual input change
+  document.querySelectorAll('.score-input').forEach(input => {
+    input.addEventListener('change', () => {
+      input.classList.remove('changed');
+      void input.offsetWidth;
+      input.classList.add('changed');
+    });
+  });
 }
