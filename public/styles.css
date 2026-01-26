@@ -418,7 +418,7 @@ button:disabled,
 /* Game cards */
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
   margin-top: 20px;
 }
@@ -426,7 +426,7 @@ button:disabled,
 .game-card {
   background: linear-gradient(145deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
   border-radius: var(--radius-md);
-  padding: 24px;
+  padding: 0;
   box-shadow: var(--shadow-md);
   transition: all 200ms ease;
   cursor: pointer;
@@ -447,6 +447,16 @@ button:disabled,
   transition: opacity 200ms ease;
 }
 
+.game-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
 .game-card:hover::before {
   opacity: 1;
 }
@@ -457,39 +467,170 @@ button:disabled,
   border-color: rgba(34, 197, 94, 0.3);
 }
 
-.game-card .teams {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-  line-height: 1.5;
+/* Match header with kickoff time */
+.game-card-header {
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
-.game-card .kickoff-time {
+.game-card-header .kickoff-time {
   color: var(--text-muted);
-  font-size: 13px;
-  margin-bottom: 8px;
+  font-size: 12px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.game-card .countdown {
+.game-card-header .kickoff-time::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.game-card-header .countdown {
   color: var(--accent-secondary);
   font-family: var(--font-score);
   font-weight: 600;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 10px;
+  background: rgba(251, 191, 36, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+/* Urgent countdown (under 1 hour) */
+.game-card-header .countdown.urgent {
+  color: var(--danger);
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* VS layout for teams */
+.game-card-body {
+  padding: 20px 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.match-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.team {
+  flex: 1;
+  text-align: center;
+}
+
+.team-name {
+  font-family: var(--font-display);
   font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.team.home .team-name {
+  color: var(--text-primary);
+}
+
+.team.away .team-name {
+  color: var(--text-secondary);
+}
+
+.vs-badge {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+/* Final score display in card */
+.match-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.match-score .score-number {
+  font-family: var(--font-score);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 40px;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-.game-card .final-score {
+.match-score .score-divider {
   font-family: var(--font-score);
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 24px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.match-score.final .score-number {
   color: var(--accent-primary);
-  margin-top: 12px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+}
+
+/* Card footer with status */
+.game-card-footer {
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.game-card-footer .badge {
+  font-size: 10px;
+  padding: 4px 10px;
+}
+
+/* Legacy support - hide old elements if they exist */
+.game-card .teams {
+  display: none;
+}
+
+.game-card .final-score:not(.match-score .final-score) {
+  display: none;
 }
 
 /* Predictions list */
@@ -842,11 +983,28 @@ a:focus-visible {
     font-size: 18px;
   }
 
-  .game-card .teams {
-    font-size: 16px;
-  }
-
   .score-display {
     font-size: 30px;
+  }
+
+  /* Game card responsive */
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-name {
+    font-size: 14px;
+  }
+
+  .match-score .score-number {
+    font-size: 28px;
+  }
+
+  .game-card-header {
+    padding: 10px 14px;
+  }
+
+  .game-card-body {
+    padding: 16px 14px;
   }
 }

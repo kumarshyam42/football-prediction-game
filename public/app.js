@@ -169,15 +169,28 @@ function displayUpcomingGames(games) {
 
   const html = `
     <div class="games-grid">
-      ${games.map(game => `
+      ${games.map(game => {
+        const countdown = getCountdown(game.kickoff_datetime);
+        const isUrgent = isCountdownUrgent(game.kickoff_datetime);
+        return `
         <div class="game-card" onclick="window.location.href='/game.html?id=${game.id}'">
-          <div class="teams">⚽ ${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}</div>
-          <div class="kickoff-time">📅 ${formatDateTime(game.kickoff_datetime)}</div>
-          <div class="countdown countdown-timer" data-kickoff="${game.kickoff_datetime}">
-            ⏱️ ${getCountdown(game.kickoff_datetime)}
+          <div class="game-card-header">
+            <span class="kickoff-time">${formatDateTime(game.kickoff_datetime)}</span>
+            <span class="countdown${isUrgent ? ' urgent' : ''}" data-kickoff="${game.kickoff_datetime}">${countdown}</span>
+          </div>
+          <div class="game-card-body">
+            <div class="match-teams">
+              <div class="team home">
+                <div class="team-name">${escapeHtml(game.home_team)}</div>
+              </div>
+              <div class="vs-badge">VS</div>
+              <div class="team away">
+                <div class="team-name">${escapeHtml(game.away_team)}</div>
+              </div>
+            </div>
           </div>
         </div>
-      `).join('')}
+      `}).join('')}
     </div>
   `;
 
@@ -200,13 +213,25 @@ function displayCompletedGames(games) {
     <div class="games-grid">
       ${recent.map(game => `
         <div class="game-card" onclick="window.location.href='/game.html?id=${game.id}'">
-          <div class="teams">⚽ ${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}</div>
-          <div class="kickoff-time">📅 ${formatDateTime(game.kickoff_datetime)}</div>
-          <div class="final-score score-display">
-            ${game.final_home_score} - ${game.final_away_score}
+          <div class="game-card-header">
+            <span class="kickoff-time">${formatDateTime(game.kickoff_datetime)}</span>
+            <span class="badge badge-success">Final</span>
           </div>
-          <div style="margin-top: 8px;">
-            <span class="badge badge-success">✓ Final</span>
+          <div class="game-card-body">
+            <div class="match-teams">
+              <div class="team home">
+                <div class="team-name">${escapeHtml(game.home_team)}</div>
+              </div>
+              <div class="vs-badge">VS</div>
+              <div class="team away">
+                <div class="team-name">${escapeHtml(game.away_team)}</div>
+              </div>
+            </div>
+            <div class="match-score final">
+              <span class="score-number">${game.final_home_score}</span>
+              <span class="score-divider">-</span>
+              <span class="score-number">${game.final_away_score}</span>
+            </div>
           </div>
         </div>
       `).join('')}
@@ -236,7 +261,7 @@ function getCountdown(kickoffDatetime) {
   const diff = kickoff - now;
 
   if (diff <= 0) {
-    return 'Kickoff!';
+    return 'LIVE';
   }
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -252,13 +277,28 @@ function getCountdown(kickoffDatetime) {
   }
 }
 
+// Check if countdown is urgent (under 1 hour)
+function isCountdownUrgent(kickoffDatetime) {
+  const now = new Date();
+  const kickoff = new Date(kickoffDatetime);
+  const diff = kickoff - now;
+  const oneHour = 60 * 60 * 1000;
+  return diff > 0 && diff < oneHour;
+}
+
 // Start countdown timers
 function startCountdowns() {
   setInterval(() => {
-    document.querySelectorAll('.countdown').forEach(el => {
+    document.querySelectorAll('.countdown[data-kickoff]').forEach(el => {
       const kickoff = el.getAttribute('data-kickoff');
       if (kickoff) {
         el.textContent = getCountdown(kickoff);
+        // Update urgent class
+        if (isCountdownUrgent(kickoff)) {
+          el.classList.add('urgent');
+        } else {
+          el.classList.remove('urgent');
+        }
       }
     });
   }, 60000); // Update every minute
