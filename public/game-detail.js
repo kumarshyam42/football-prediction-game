@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadGameData();
 
   // Set up event listeners
-  document.getElementById('change-name-btn').addEventListener('click', showPlayerModal);
   document.getElementById('player-form').addEventListener('submit', handlePlayerSubmit);
   document.getElementById('prediction-form').addEventListener('submit', handlePredictionSubmit);
 });
@@ -30,7 +29,6 @@ function checkPlayerName() {
   if (savedPlayer) {
     try {
       currentPlayer = JSON.parse(savedPlayer);
-      updatePlayerDisplay();
     } catch (e) {
       showPlayerModal();
     }
@@ -70,7 +68,6 @@ async function handlePlayerSubmit(e) {
     if (response.ok) {
       currentPlayer = data.player;
       localStorage.setItem('footballPredictionPlayer', JSON.stringify(currentPlayer));
-      updatePlayerDisplay();
       hidePlayerModal();
       loadGameData(); // Reload to show prediction form
     } else {
@@ -82,12 +79,6 @@ async function handlePlayerSubmit(e) {
   }
 }
 
-// Update player display in header
-function updatePlayerDisplay() {
-  if (currentPlayer) {
-    document.getElementById('player-display').textContent = `Playing as ${currentPlayer.name}`;
-  }
-}
 
 // Load all game data
 async function loadGameData() {
