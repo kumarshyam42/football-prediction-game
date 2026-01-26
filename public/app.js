@@ -84,40 +84,72 @@ async function loadLeaderboard() {
     const data = await response.json();
 
     if (data.leaderboard.length === 0) {
-      container.innerHTML = '<div class="empty-state"><p>No completed games yet</p></div>';
+      container.innerHTML = `
+        <div class="leaderboard-empty-podium">
+          <div class="podium-placeholder">
+            <div class="placeholder-spot"></div>
+            <div class="placeholder-spot center"></div>
+            <div class="placeholder-spot"></div>
+          </div>
+          <p>No completed games yet. Make predictions to climb the ranks!</p>
+        </div>
+      `;
       return;
     }
 
-    const table = `
-      <table>
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Points</th>
-            <th>Games</th>
-            <th>Pts/Game</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${data.leaderboard.map(player => {
-            const rankClass = player.rank <= 3 ? `rank-${player.rank}` : 'rank-other';
-            const rankEmoji = player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : '';
-            return `
-            <tr>
-              <td><span class="rank-badge ${rankClass}">${rankEmoji || player.rank}</span></td>
-              <td style="font-weight: 600;">${escapeHtml(player.player_name)}</td>
-              <td><span class="points-display">${player.total_points} pts</span></td>
-              <td>${player.games_predicted}</td>
-              <td><strong>${player.points_per_prediction.toFixed(2)}</strong></td>
-            </tr>
-          `;
-          }).join('')}
-        </tbody>
-      </table>
+    // Separate top 3 and rest
+    const top3 = data.leaderboard.slice(0, 3);
+    const rest = data.leaderboard.slice(3);
+
+    // Build podium HTML (reorder: 2nd, 1st, 3rd for visual layout)
+    const podiumOrder = [];
+    if (top3[1]) podiumOrder.push({ ...top3[1], position: 'second' });
+    if (top3[0]) podiumOrder.push({ ...top3[0], position: 'first' });
+    if (top3[2]) podiumOrder.push({ ...top3[2], position: 'third' });
+
+    const podiumHtml = `
+      <div class="leaderboard-podium">
+        ${podiumOrder.map(player => `
+          <div class="podium-spot ${player.position}">
+            <div class="podium-player">
+              <div class="podium-rank">${player.rank}</div>
+              <div class="podium-name">${escapeHtml(player.player_name)}</div>
+              <div class="podium-points">${player.total_points} pts</div>
+              <div class="podium-stats">${player.points_per_prediction.toFixed(2)} per game</div>
+            </div>
+            <div class="podium-pedestal"></div>
+          </div>
+        `).join('')}
+      </div>
     `;
 
-    container.innerHTML = table;
+    // Build list HTML for remaining players
+    const listHtml = rest.length > 0 ? `
+      <div class="leaderboard-list">
+        ${rest.map(player => `
+          <div class="leaderboard-row">
+            <span class="rank">${player.rank}</span>
+            <span class="player-name">${escapeHtml(player.player_name)}</span>
+            <div class="player-stats">
+              <div class="stat">
+                <span class="stat-value points-value">${player.total_points}</span>
+                <span class="stat-label">Points</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">${player.games_predicted}</span>
+                <span class="stat-label">Games</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value">${player.points_per_prediction.toFixed(2)}</span>
+                <span class="stat-label">Avg</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    container.innerHTML = podiumHtml + listHtml;
   } catch (error) {
     console.error('Error loading leaderboard:', error);
     container.innerHTML = '<div class="error-message">Failed to load leaderboard</div>';
