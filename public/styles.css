@@ -1356,9 +1356,10 @@ a:focus-visible {
 
 .scoreboard-divider {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 0 16px;
+  padding: 0 12px;
+  padding-bottom: 20px; /* Align with center of score inputs */
 }
 
 .scoreboard-vs {
