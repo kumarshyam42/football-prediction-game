@@ -2,6 +2,7 @@
 let adminKey = null;
 let currentScoreGame = null;
 let currentEditGame = null;
+let gamesData = {};
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -49,6 +50,10 @@ async function loadGames() {
     // Sort by kickoff date
     data.games.sort((a, b) => new Date(b.kickoff_datetime) - new Date(a.kickoff_datetime));
 
+    // Store game data for event handlers (avoids inline JS string injection)
+    gamesData = {};
+    data.games.forEach(game => { gamesData[game.id] = game; });
+
     let html = '<div style="display: flex; flex-direction: column; gap: 16px;">';
 
     data.games.forEach(game => {
@@ -81,7 +86,7 @@ async function loadGames() {
               <button
                 class="btn-secondary"
                 style="min-width: auto; padding: 8px 16px;"
-                onclick="showEditModal(${game.id}, '${escapeHtml(game.home_team)}', '${escapeHtml(game.away_team)}', '${game.kickoff_datetime}')"
+                data-action="edit" data-game-id="${game.id}"
               >
                 Edit
               </button>
@@ -89,7 +94,7 @@ async function loadGames() {
                 <button
                   class="btn-secondary"
                   style="min-width: auto; padding: 8px 16px;"
-                  onclick="showScoreModal(${game.id}, '${escapeHtml(game.home_team)}', '${escapeHtml(game.away_team)}')"
+                  data-action="score" data-game-id="${game.id}"
                 >
                   Enter Score
                 </button>
@@ -97,7 +102,7 @@ async function loadGames() {
               <button
                 class="btn-danger"
                 style="min-width: auto; padding: 8px 16px;"
-                onclick="deleteGame(${game.id}, '${escapeHtml(game.home_team)} vs ${escapeHtml(game.away_team)}')"
+                data-action="delete" data-game-id="${game.id}"
               >
                 Delete
               </button>
@@ -109,6 +114,9 @@ async function loadGames() {
 
     html += '</div>';
     container.innerHTML = html;
+
+    // Attach event listeners via delegation
+    container.addEventListener('click', handleGameAction);
 
   } catch (error) {
     console.error('Error loading games:', error);
@@ -160,6 +168,28 @@ async function handleCreateGame(e) {
   } catch (error) {
     console.error('Error creating game:', error);
     messageEl.innerHTML = '<div class="error-message">Failed to create game. Please try again.</div>';
+  }
+}
+
+// Handle game action buttons via event delegation
+function handleGameAction(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+
+  const gameId = parseInt(btn.dataset.gameId, 10);
+  const game = gamesData[gameId];
+  if (!game) return;
+
+  switch (btn.dataset.action) {
+    case 'edit':
+      showEditModal(gameId, game.home_team, game.away_team, game.kickoff_datetime);
+      break;
+    case 'score':
+      showScoreModal(gameId, game.home_team, game.away_team);
+      break;
+    case 'delete':
+      deleteGame(gameId, `${game.home_team} vs ${game.away_team}`);
+      break;
   }
 }
 
@@ -348,7 +378,3 @@ async function handleUpdateGame(e) {
   }
 }
 
-// Make functions globally available
-window.showScoreModal = showScoreModal;
-window.showEditModal = showEditModal;
-window.deleteGame = deleteGame;

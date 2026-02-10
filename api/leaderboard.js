@@ -111,6 +111,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Leaderboard API error:', error);
-    return res.status(500).json({ error: 'Internal server error', message: error.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

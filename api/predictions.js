@@ -37,8 +37,15 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      if (predicted_home_score < 0 || predicted_away_score < 0) {
-        return res.status(400).json({ error: 'Scores cannot be negative' });
+      const homeScore = parseInt(predicted_home_score, 10);
+      const awayScore = parseInt(predicted_away_score, 10);
+
+      if (isNaN(homeScore) || isNaN(awayScore) || homeScore !== Number(predicted_home_score) || awayScore !== Number(predicted_away_score)) {
+        return res.status(400).json({ error: 'Scores must be whole numbers' });
+      }
+
+      if (homeScore < 0 || homeScore > 99 || awayScore < 0 || awayScore > 99) {
+        return res.status(400).json({ error: 'Scores must be between 0 and 99' });
       }
 
       // Check if game exists and get kickoff time
@@ -63,20 +70,16 @@ module.exports = async function handler(req, res) {
       }
 
       // Upsert prediction (insert or update if exists)
-      console.log('Attempting to upsert prediction:', { player_id, game_id, predicted_home_score, predicted_away_score });
-
       const { rows: prediction } = await sql`
         INSERT INTO predictions (player_id, game_id, predicted_home_score, predicted_away_score)
-        VALUES (${player_id}, ${game_id}, ${predicted_home_score}, ${predicted_away_score})
+        VALUES (${player_id}, ${game_id}, ${homeScore}, ${awayScore})
         ON CONFLICT (player_id, game_id)
         DO UPDATE SET
-          predicted_home_score = ${predicted_home_score},
-          predicted_away_score = ${predicted_away_score},
+          predicted_home_score = ${homeScore},
+          predicted_away_score = ${awayScore},
           updated_at = CURRENT_TIMESTAMP
         RETURNING id, player_id, game_id, predicted_home_score, predicted_away_score, created_at, updated_at
       `;
-
-      console.log('Prediction upserted successfully:', prediction[0]);
       return res.status(200).json({ prediction: prediction[0] });
 
     } else {
@@ -86,11 +89,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Predictions API error:', error);
-    console.error('Error stack:', error.stack);
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: error.message,
-      details: error.toString()
-    });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

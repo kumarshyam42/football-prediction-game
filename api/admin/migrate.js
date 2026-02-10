@@ -1,11 +1,5 @@
 const { sql } = require('@vercel/postgres');
-
-// Helper function to check admin authentication
-function isAdmin(req) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const providedKey = req.headers['x-admin-key'] || req.query.key;
-  return adminSecret && providedKey === adminSecret;
-}
+const { isAdmin } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
   try {
@@ -47,9 +41,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Migration API error:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: error.message
-    });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

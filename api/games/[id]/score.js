@@ -1,11 +1,5 @@
 const { sql } = require('@vercel/postgres');
-
-// Helper function to check admin authentication
-function isAdmin(req) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const providedKey = req.headers['x-admin-key'] || req.query.key;
-  return adminSecret && providedKey === adminSecret;
-}
+const { isAdmin } = require('../../lib/auth');
 
 module.exports = async function handler(req, res) {
   try {
@@ -29,14 +23,21 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      if (final_home_score < 0 || final_away_score < 0) {
-        return res.status(400).json({ error: 'Scores cannot be negative' });
+      const homeScore = parseInt(final_home_score, 10);
+      const awayScore = parseInt(final_away_score, 10);
+
+      if (isNaN(homeScore) || isNaN(awayScore) || homeScore !== Number(final_home_score) || awayScore !== Number(final_away_score)) {
+        return res.status(400).json({ error: 'Scores must be whole numbers' });
+      }
+
+      if (homeScore < 0 || homeScore > 99 || awayScore < 0 || awayScore > 99) {
+        return res.status(400).json({ error: 'Scores must be between 0 and 99' });
       }
 
       const { rows: updatedGame } = await sql`
         UPDATE games
-        SET final_home_score = ${final_home_score},
-            final_away_score = ${final_away_score}
+        SET final_home_score = ${homeScore},
+            final_away_score = ${awayScore}
         WHERE id = ${id}
         RETURNING id, home_team, away_team, kickoff_datetime,
                   final_home_score, final_away_score
@@ -55,6 +56,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Update score API error:', error);
-    return res.status(500).json({ error: 'Internal server error', message: error.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

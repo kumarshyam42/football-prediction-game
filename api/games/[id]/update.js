@@ -1,11 +1,5 @@
 const { sql } = require('@vercel/postgres');
-
-// Helper function to check admin authentication
-function isAdmin(req) {
-  const adminSecret = process.env.ADMIN_SECRET;
-  const providedKey = req.headers['x-admin-key'] || req.query.key;
-  return adminSecret && providedKey === adminSecret;
-}
+const { isAdmin } = require('../../lib/auth');
 
 module.exports = async function handler(req, res) {
   try {
@@ -27,6 +21,10 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({
           error: 'home_team, away_team, and kickoff_datetime are required'
         });
+      }
+
+      if (home_team.trim().length > 100 || away_team.trim().length > 100) {
+        return res.status(400).json({ error: 'Team names are too long (max 100 characters)' });
       }
 
       const { rows: updatedGame } = await sql`
@@ -51,6 +49,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Update game API error:', error);
-    return res.status(500).json({ error: 'Internal server error', message: error.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

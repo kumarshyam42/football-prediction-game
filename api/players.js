@@ -22,6 +22,10 @@ module.exports = async function handler(req, res) {
 
       const trimmedName = name.trim();
 
+      if (trimmedName.length > 100) {
+        return res.status(400).json({ error: 'Player name is too long (max 100 characters)' });
+      }
+
       // Try to get existing player first
       const { rows: existing } = await sql`
         SELECT id, name, created_at
@@ -49,10 +53,6 @@ module.exports = async function handler(req, res) {
 
   } catch (error) {
     console.error('Players API error:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
