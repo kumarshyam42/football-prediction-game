@@ -79,10 +79,12 @@
 - `api/player-predictions.js` - Per-player prediction history with points
 
 ### Admin Endpoints
-- `/admin.html?key=SECRET` - Admin panel
-- `/cleanup.html?key=SECRET` - Database cleanup
-- `/setup.html?key=SECRET` - Database schema setup
-- `/migrate.html?key=SECRET` - Database migrations
+- `/admin.html` - Admin panel (login prompt for admin key)
+- `/cleanup.html` - Database cleanup (login prompt for admin key)
+- `/setup.html` - Database schema setup (login prompt for admin key)
+- `/migrate.html` - Database migrations (login prompt for admin key)
+- Admin key is sent via `x-admin-key` header (never in URL)
+- Key stored in sessionStorage (persists within browser tab session)
 
 ### Important Notes
 - Player names stored in localStorage (no authentication)
@@ -217,7 +219,7 @@ Required in Vercel dashboard:
 
 ### "Internal Server Error" on Prediction Submission
 **Likely causes:**
-1. Database column missing (check schema with `/api/admin/diagnose?key=SECRET`)
+1. Database column missing (check schema via diagnose endpoint with x-admin-key header)
 2. Player doesn't exist (localStorage corrupted)
 3. Game doesn't exist
 4. Kickoff time has passed

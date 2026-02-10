@@ -6,31 +6,87 @@ let gamesData = {};
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
-  // Get admin key from URL
-  const params = new URLSearchParams(window.location.search);
-  adminKey = params.get('key');
+  // Check sessionStorage for existing key
+  adminKey = sessionStorage.getItem('adminKey');
 
-  if (!adminKey) {
-    showAuthError();
-    return;
+  if (adminKey) {
+    showAdminContent();
+  } else {
+    showLoginForm();
   }
+});
 
+// Show login form
+function showLoginForm() {
+  document.getElementById('admin-login').style.display = 'block';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('login-form').addEventListener('submit', handleLogin);
+  document.getElementById('admin-key-input').focus();
+}
+
+// Handle login form submission
+async function handleLogin(e) {
+  e.preventDefault();
+  const keyInput = document.getElementById('admin-key-input');
+  const messageEl = document.getElementById('login-message');
+  const key = keyInput.value.trim();
+
+  if (!key) return;
+
+  // Validate the key by making a test request to an admin endpoint
+  try {
+    const response = await fetch('/api/games', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': key
+      },
+      body: JSON.stringify({})
+    });
+
+    // 400 = key is valid but missing fields (expected)
+    // 403 = key is invalid
+    if (response.status === 403) {
+      messageEl.innerHTML = '<div class="error-message">Invalid admin key</div>';
+      keyInput.focus();
+      return;
+    }
+
+    // Key is valid - store and show content
+    adminKey = key;
+    sessionStorage.setItem('adminKey', key);
+    showAdminContent();
+  } catch (error) {
+    messageEl.innerHTML = '<div class="error-message">Connection error. Please try again.</div>';
+  }
+}
+
+// Show admin content and set up event listeners
+function showAdminContent() {
+  document.getElementById('admin-login').style.display = 'none';
   document.getElementById('admin-content').style.display = 'block';
 
-  // Load games
   loadGames();
 
-  // Set up event listeners
   document.getElementById('create-game-form').addEventListener('submit', handleCreateGame);
   document.getElementById('score-form').addEventListener('submit', handleSaveScore);
   document.getElementById('cancel-score-btn').addEventListener('click', hideScoreModal);
   document.getElementById('edit-form').addEventListener('submit', handleUpdateGame);
   document.getElementById('cancel-edit-btn').addEventListener('click', hideEditModal);
-});
+}
 
-// Show auth error
-function showAuthError() {
-  document.getElementById('auth-error').style.display = 'block';
+// Handle 403 responses - key may have changed
+function handleAuthError() {
+  adminKey = null;
+  sessionStorage.removeItem('adminKey');
+  showLoginForm();
+  document.getElementById('login-message').innerHTML =
+    '<div class="error-message">Session expired. Please sign in again.</div>';
+}
+
+// Build admin headers for fetch calls
+function adminHeaders(extra) {
+  return Object.assign({ 'x-admin-key': adminKey }, extra || {});
 }
 
 // Load all games
@@ -143,15 +199,17 @@ async function handleCreateGame(e) {
   const kickoffDatetime = localDate.toISOString();
 
   try {
-    const response = await fetch('/api/games?key=' + adminKey, {
+    const response = await fetch('/api/games', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         home_team: homeTeam,
         away_team: awayTeam,
         kickoff_datetime: kickoffDatetime
       })
     });
+
+    if (response.status === 403) { handleAuthError(); return; }
 
     const data = await response.json();
 
@@ -222,14 +280,16 @@ async function handleSaveScore(e) {
   const messageEl = document.getElementById('score-message');
 
   try {
-    const response = await fetch(`/api/games/${currentScoreGame}/score?key=${adminKey}`, {
+    const response = await fetch(`/api/games/${currentScoreGame}/score`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         final_home_score: homeScore,
         final_away_score: awayScore
       })
     });
+
+    if (response.status === 403) { handleAuthError(); return; }
 
     const data = await response.json();
 
@@ -255,9 +315,12 @@ async function deleteGame(gameId, gameName) {
   }
 
   try {
-    const response = await fetch(`/api/games/${gameId}?key=${adminKey}`, {
-      method: 'DELETE'
+    const response = await fetch(`/api/games/${gameId}`, {
+      method: 'DELETE',
+      headers: adminHeaders()
     });
+
+    if (response.status === 403) { handleAuthError(); return; }
 
     const data = await response.json();
 
@@ -351,15 +414,17 @@ async function handleUpdateGame(e) {
   const kickoffDatetime = localDate.toISOString();
 
   try {
-    const response = await fetch(`/api/games/${currentEditGame}/update?key=${adminKey}`, {
+    const response = await fetch(`/api/games/${currentEditGame}/update`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         home_team: homeTeam,
         away_team: awayTeam,
         kickoff_datetime: kickoffDatetime
       })
     });
+
+    if (response.status === 403) { handleAuthError(); return; }
 
     const data = await response.json();
 
@@ -377,4 +442,3 @@ async function handleUpdateGame(e) {
     messageEl.innerHTML = '<div class="error-message">Failed to update game. Please try again.</div>';
   }
 }
-

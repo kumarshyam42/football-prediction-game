@@ -10,32 +10,42 @@
 <body>
     <div class="container">
         <header>
-            <h1>🔧 Database Migration</h1>
+            <h1>Database Migration</h1>
             <nav>
                 <a href="/">Home</a>
             </nav>
         </header>
 
         <main>
-            <div class="card">
-                <h2>⚙️ Run Database Migration</h2>
+            <div id="admin-login" class="card" style="display: none;">
+                <h2>Admin Login</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="admin-key-input">Admin Key</label>
+                        <input
+                            type="password"
+                            id="admin-key-input"
+                            placeholder="Enter admin key"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    <div id="login-message"></div>
+                    <button type="submit">Sign In</button>
+                </form>
+            </div>
+
+            <div class="card" id="migrate-card" style="display: none;">
+                <h2>Run Database Migration</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">
                     This will update the database schema to ensure all columns exist.
                 </p>
 
-                <div id="auth-error" style="display: none;">
-                    <div class="error-message">
-                        ❌ Admin key required. Please add ?key=YOUR_ADMIN_KEY to the URL.
-                    </div>
-                </div>
+                <button id="migrate-btn" class="btn" style="width: 100%;">
+                    Run Migration
+                </button>
 
-                <div id="migrate-controls" style="display: none;">
-                    <button id="migrate-btn" class="btn" style="width: 100%;">
-                        🚀 Run Migration
-                    </button>
-
-                    <div id="result-message" style="margin-top: 20px;"></div>
-                </div>
+                <div id="result-message" style="margin-top: 20px;"></div>
             </div>
         </main>
     </div>
@@ -44,64 +54,102 @@
         let adminKey = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Get admin key from URL
-            const params = new URLSearchParams(window.location.search);
-            adminKey = params.get('key');
+            adminKey = sessionStorage.getItem('adminKey');
 
-            if (!adminKey) {
-                document.getElementById('auth-error').style.display = 'block';
-                return;
+            if (adminKey) {
+                showControls();
+            } else {
+                showLoginForm();
             }
-
-            document.getElementById('migrate-controls').style.display = 'block';
-            document.getElementById('migrate-btn').addEventListener('click', handleMigration);
         });
+
+        function showLoginForm() {
+            document.getElementById('admin-login').style.display = 'block';
+            document.getElementById('migrate-card').style.display = 'none';
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('admin-key-input').focus();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const keyInput = document.getElementById('admin-key-input');
+            const messageEl = document.getElementById('login-message');
+            const key = keyInput.value.trim();
+            if (!key) return;
+
+            try {
+                const response = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+                    body: JSON.stringify({})
+                });
+
+                if (response.status === 403) {
+                    messageEl.innerHTML = '<div class="error-message">Invalid admin key</div>';
+                    keyInput.focus();
+                    return;
+                }
+
+                adminKey = key;
+                sessionStorage.setItem('adminKey', key);
+                showControls();
+            } catch (error) {
+                messageEl.innerHTML = '<div class="error-message">Connection error. Please try again.</div>';
+            }
+        }
+
+        function showControls() {
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('migrate-card').style.display = 'block';
+            document.getElementById('migrate-btn').addEventListener('click', handleMigration);
+        }
 
         async function handleMigration() {
             const btn = document.getElementById('migrate-btn');
             const messageEl = document.getElementById('result-message');
 
             btn.disabled = true;
-            btn.textContent = 'Running migration...';
+            btn.textContent = 'Running migration\u2026';
             messageEl.innerHTML = '';
 
             try {
-                const response = await fetch(`/api/admin/migrate?key=${adminKey}`, {
+                const response = await fetch('/api/admin/migrate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey }
                 });
+
+                if (response.status === 403) {
+                    adminKey = null;
+                    sessionStorage.removeItem('adminKey');
+                    showLoginForm();
+                    document.getElementById('login-message').innerHTML =
+                        '<div class="error-message">Session expired. Please sign in again.</div>';
+                    return;
+                }
 
                 const data = await response.json();
 
                 if (response.ok) {
                     messageEl.innerHTML = `
                         <div class="success-message">
-                            <h3 style="margin-bottom: 12px;">✅ Migration Complete!</h3>
+                            <h3 style="margin-bottom: 12px;">Migration Complete</h3>
                             <p>${data.message}</p>
                             <p style="margin-top: 16px;">
                                 You can now <a href="/" style="color: var(--accent-primary); text-decoration: underline;">return to the home page</a> and try submitting predictions again.
                             </p>
                         </div>
                     `;
-                    btn.textContent = '✓ Migration Complete';
+                    btn.textContent = 'Migration Complete';
                 } else {
-                    messageEl.innerHTML = `
-                        <div class="error-message">
-                            ❌ Error: ${data.error || data.message}
-                        </div>
-                    `;
+                    messageEl.innerHTML = `<div class="error-message">Error: ${data.error || data.message}</div>`;
                     btn.disabled = false;
-                    btn.textContent = '🚀 Run Migration';
+                    btn.textContent = 'Run Migration';
                 }
             } catch (error) {
                 console.error('Migration error:', error);
-                messageEl.innerHTML = `
-                    <div class="error-message">
-                        ❌ Failed to run migration. Please try again.
-                    </div>
-                `;
+                messageEl.innerHTML = '<div class="error-message">Failed to run migration. Please try again.</div>';
                 btn.disabled = false;
-                btn.textContent = '🚀 Run Migration';
+                btn.textContent = 'Run Migration';
             }
         }
     </script>

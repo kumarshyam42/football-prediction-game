@@ -17,11 +17,22 @@
         </header>
 
         <main>
-            <div id="auth-error" class="card" style="display: none;">
-                <div class="error-message">
-                    <strong>Unauthorized</strong>
-                    <p>Invalid or missing admin key. Please check the URL and try again.</p>
-                </div>
+            <div id="admin-login" class="card" style="display: none;">
+                <h2>Admin Login</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="admin-key-input">Admin Key</label>
+                        <input
+                            type="password"
+                            id="admin-key-input"
+                            placeholder="Enter admin key"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    <div id="login-message"></div>
+                    <button type="submit">Sign In</button>
+                </form>
             </div>
 
             <div id="admin-content" style="display: none;">

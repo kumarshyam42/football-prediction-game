@@ -10,26 +10,38 @@
 <body>
     <div class="container">
         <header>
-            <h1>🧹 Database Cleanup</h1>
+            <h1>Database Cleanup</h1>
             <nav>
                 <a href="/">Home</a>
             </nav>
         </header>
 
         <main>
-            <div class="card">
-                <h2>⚠️ Clean Database</h2>
+            <div id="admin-login" class="card" style="display: none;">
+                <h2>Admin Login</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="admin-key-input">Admin Key</label>
+                        <input
+                            type="password"
+                            id="admin-key-input"
+                            placeholder="Enter admin key"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    <div id="login-message"></div>
+                    <button type="submit">Sign In</button>
+                </form>
+            </div>
+
+            <div class="card" id="cleanup-card" style="display: none;">
+                <h2>Clean Database</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">
                     This will remove all test data from the database. This action cannot be undone.
                 </p>
 
-                <div id="auth-error" style="display: none;">
-                    <div class="error-message">
-                        ❌ Admin key required. Please add ?key=YOUR_ADMIN_KEY to the URL.
-                    </div>
-                </div>
-
-                <div id="cleanup-controls" style="display: none;">
+                <div id="cleanup-controls">
                     <div style="background: var(--bg-tertiary); padding: 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
                         <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
                             <input type="checkbox" id="keep-players" style="width: auto; min-height: auto;">
@@ -39,7 +51,7 @@
 
                     <div style="display: flex; gap: 12px;">
                         <button id="cleanup-btn" class="btn-danger" style="flex: 1;">
-                            🗑️ Clean Database
+                            Clean Database
                         </button>
                         <button onclick="window.location.href='/'" class="btn-secondary" style="flex: 1;">
                             Cancel
@@ -56,25 +68,61 @@
         let adminKey = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Get admin key from URL
-            const params = new URLSearchParams(window.location.search);
-            adminKey = params.get('key');
+            adminKey = sessionStorage.getItem('adminKey');
 
-            if (!adminKey) {
-                document.getElementById('auth-error').style.display = 'block';
-                return;
+            if (adminKey) {
+                showControls();
+            } else {
+                showLoginForm();
             }
-
-            document.getElementById('cleanup-controls').style.display = 'block';
-            document.getElementById('cleanup-btn').addEventListener('click', handleCleanup);
         });
+
+        function showLoginForm() {
+            document.getElementById('admin-login').style.display = 'block';
+            document.getElementById('cleanup-card').style.display = 'none';
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('admin-key-input').focus();
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const keyInput = document.getElementById('admin-key-input');
+            const messageEl = document.getElementById('login-message');
+            const key = keyInput.value.trim();
+            if (!key) return;
+
+            try {
+                const response = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+                    body: JSON.stringify({})
+                });
+
+                if (response.status === 403) {
+                    messageEl.innerHTML = '<div class="error-message">Invalid admin key</div>';
+                    keyInput.focus();
+                    return;
+                }
+
+                adminKey = key;
+                sessionStorage.setItem('adminKey', key);
+                showControls();
+            } catch (error) {
+                messageEl.innerHTML = '<div class="error-message">Connection error. Please try again.</div>';
+            }
+        }
+
+        function showControls() {
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('cleanup-card').style.display = 'block';
+            document.getElementById('cleanup-btn').addEventListener('click', handleCleanup);
+        }
 
         async function handleCleanup() {
             const keepPlayers = document.getElementById('keep-players').checked;
             const btn = document.getElementById('cleanup-btn');
             const messageEl = document.getElementById('result-message');
 
-            // Confirm action
             const confirmMessage = keepPlayers
                 ? 'Are you sure you want to delete all games and predictions?'
                 : 'Are you sure you want to delete ALL data (games, predictions, and players)?';
@@ -84,22 +132,31 @@
             }
 
             btn.disabled = true;
-            btn.textContent = 'Cleaning...';
+            btn.textContent = 'Cleaning\u2026';
             messageEl.innerHTML = '';
 
             try {
-                const response = await fetch(`/api/admin/cleanup?key=${adminKey}`, {
+                const response = await fetch('/api/admin/cleanup', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
                     body: JSON.stringify({ keepPlayers })
                 });
+
+                if (response.status === 403) {
+                    adminKey = null;
+                    sessionStorage.removeItem('adminKey');
+                    showLoginForm();
+                    document.getElementById('login-message').innerHTML =
+                        '<div class="error-message">Session expired. Please sign in again.</div>';
+                    return;
+                }
 
                 const data = await response.json();
 
                 if (response.ok) {
                     messageEl.innerHTML = `
                         <div class="success-message">
-                            <h3 style="margin-bottom: 12px;">✅ Cleanup Complete!</h3>
+                            <h3 style="margin-bottom: 12px;">Cleanup Complete</h3>
                             <p style="margin-bottom: 8px;"><strong>Deleted:</strong></p>
                             <ul style="margin-left: 20px;">
                                 <li>${data.deleted.predictions} predictions</li>
@@ -112,23 +169,15 @@
                         </div>
                     `;
                 } else {
-                    messageEl.innerHTML = `
-                        <div class="error-message">
-                            ❌ Error: ${data.error}
-                        </div>
-                    `;
+                    messageEl.innerHTML = `<div class="error-message">Error: ${data.error}</div>`;
                     btn.disabled = false;
-                    btn.textContent = '🗑️ Clean Database';
+                    btn.textContent = 'Clean Database';
                 }
             } catch (error) {
                 console.error('Cleanup error:', error);
-                messageEl.innerHTML = `
-                    <div class="error-message">
-                        ❌ Failed to clean database. Please try again.
-                    </div>
-                `;
+                messageEl.innerHTML = '<div class="error-message">Failed to clean database. Please try again.</div>';
                 btn.disabled = false;
-                btn.textContent = '🗑️ Clean Database';
+                btn.textContent = 'Clean Database';
             }
         }
     </script>
