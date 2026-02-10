@@ -76,6 +76,7 @@
 - `api/games.js` - Game management
 - `api/players.js` - Player management
 - `api/leaderboard.js` - Leaderboard calculation
+- `api/player-predictions.js` - Per-player prediction history with points
 
 ### Admin Endpoints
 - `/admin.html?key=SECRET` - Admin panel
@@ -284,6 +285,15 @@ Before approving changes to production:
 - Decision: Use preview URLs for UI testing, be careful with database changes
 - Future: Could set up full staging with separate database if needed
 
+### Player Prediction History Modal
+- Clicking any player name on the leaderboard opens a modal with their full prediction history
+- Shows summary stats (rank, points, games, avg) and a per-game breakdown
+- Column headers (Pred, Actual, Pts) clarify which score is which
+- Points color-coded: green (6 pts exact score), gold (3 pts correct result), muted (0 pts)
+- Upcoming predictions shown separately without points
+- API endpoint: `GET /api/player-predictions?playerId=X`
+- `calculatePoints` function is duplicated in `api/leaderboard.js`, `api/player-predictions.js`, and `public/game-detail.js`
+
 ### Database Migration Approach
 - Created admin endpoints for schema changes (`/migrate.html`, `/setup.html`)
 - Allows running migrations via UI instead of SQL console
@@ -295,7 +305,6 @@ Before approving changes to production:
 - Email notifications when games are about to lock
 - Share prediction functionality (social media)
 - Historical stats (season-long tracking)
-- Player profiles with stats
 - Multiple leagues/competitions
 
 ### Technical Debt
