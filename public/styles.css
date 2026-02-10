@@ -1748,6 +1748,41 @@ button.podium-name {
   margin-top: 0;
 }
 
+/* Column headers */
+.history-col-headers {
+  display: flex;
+  align-items: center;
+  padding: 0 12px 6px;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.history-col-match {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-col-pred,
+.history-col-actual {
+  min-width: 30px;
+  text-align: center;
+}
+
+.history-col-divider {
+  width: 1px;
+}
+
+.history-col-pts {
+  min-width: 40px;
+  text-align: right;
+}
+
 /* Prediction history list */
 .history-list {
   display: flex;
@@ -1856,6 +1891,20 @@ button.podium-name {
 
   .history-stat-value {
     font-size: 16px;
+  }
+
+  .history-col-headers {
+    padding: 0 10px 6px;
+    gap: 8px;
+  }
+
+  .history-col-pred,
+  .history-col-actual {
+    min-width: 26px;
+  }
+
+  .history-col-pts {
+    min-width: 36px;
   }
 
   .history-row {

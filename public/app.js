@@ -455,6 +455,13 @@ async function showPlayerHistoryModal(playerId) {
     if (completed.length > 0) {
       html += `
         <div class="history-section-label">Results</div>
+        <div class="history-col-headers">
+          <span class="history-col-match">Match</span>
+          <span class="history-col-pred">Pred</span>
+          <span class="history-col-divider"></span>
+          <span class="history-col-actual">Actual</span>
+          <span class="history-col-pts">Pts</span>
+        </div>
         <div class="history-list">
           ${completed.map(p => {
             const ptsClass = p.points === 6 ? 'pts-6' : p.points === 3 ? 'pts-3' : 'pts-0';
