@@ -1,5 +1,6 @@
 // Player management
 let currentPlayer = null;
+let leaderboardData = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,6 +9,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Set up event listeners
   document.getElementById('player-form').addEventListener('submit', handlePlayerSubmit);
+
+  // Delegated click listener for player names in leaderboard
+  document.getElementById('leaderboard-container').addEventListener('click', (e) => {
+    const link = e.target.closest('.player-history-link');
+    if (link) {
+      showPlayerHistoryModal(link.dataset.playerId);
+    }
+  });
+
+  // Close player history modal on backdrop click
+  document.getElementById('player-history-modal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      hidePlayerHistoryModal();
+    }
+  });
+
+  // Close player history modal on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hidePlayerHistoryModal();
+    }
+  });
 });
 
 // Check if player name exists in localStorage
@@ -83,6 +106,8 @@ async function loadLeaderboard() {
     const response = await fetch('/api/leaderboard');
     const data = await response.json();
 
+    leaderboardData = data.leaderboard;
+
     if (data.leaderboard.length === 0) {
       container.innerHTML = `
         <div class="leaderboard-empty-podium">
@@ -113,7 +138,7 @@ async function loadLeaderboard() {
           <div class="podium-spot ${player.position}">
             <div class="podium-player">
               <div class="podium-rank">${player.rank}</div>
-              <div class="podium-name">${escapeHtml(player.player_name)}</div>
+              <button class="podium-name player-history-link" data-player-id="${player.player_id}" aria-label="View prediction history for ${escapeHtml(player.player_name)}">${escapeHtml(player.player_name)}</button>
               <div class="podium-points">${player.total_points} pts</div>
               <div class="podium-stats">${player.points_per_prediction.toFixed(2)} per game</div>
             </div>
@@ -129,7 +154,7 @@ async function loadLeaderboard() {
         ${rest.map(player => `
           <div class="leaderboard-row">
             <span class="rank">${player.rank}</span>
-            <span class="player-name">${escapeHtml(player.player_name)}</span>
+            <button class="player-name player-history-link" data-player-id="${player.player_id}" aria-label="View prediction history for ${escapeHtml(player.player_name)}">${escapeHtml(player.player_name)}</button>
             <div class="player-stats">
               <div class="stat">
                 <span class="stat-value points-value">${player.total_points}</span>
@@ -353,4 +378,129 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Player History Modal
+async function showPlayerHistoryModal(playerId) {
+  const modal = document.getElementById('player-history-modal');
+  const nameEl = document.getElementById('player-history-name');
+  const summaryEl = document.getElementById('player-history-summary');
+  const bodyEl = document.getElementById('player-history-body');
+
+  // Find player summary from cached leaderboard data
+  const summary = leaderboardData.find(p => p.player_id === parseInt(playerId));
+
+  nameEl.textContent = summary ? summary.player_name : 'Player';
+  summaryEl.innerHTML = '';
+  bodyEl.innerHTML = `
+    <div class="skeleton skeleton-line"></div>
+    <div class="skeleton skeleton-line"></div>
+    <div class="skeleton skeleton-line"></div>
+  `;
+
+  modal.classList.add('active');
+
+  try {
+    const response = await fetch(`/api/player-predictions?playerId=${playerId}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      bodyEl.innerHTML = '<div class="error-message">Failed to load prediction history</div>';
+      return;
+    }
+
+    if (data.player_name) {
+      nameEl.textContent = data.player_name;
+    }
+
+    // Render summary stats
+    if (summary) {
+      summaryEl.innerHTML = `
+        <div class="player-history-stats">
+          <div class="history-stat">
+            <span class="history-stat-value">#${summary.rank}</span>
+            <span class="history-stat-label">Rank</span>
+          </div>
+          <div class="history-stat">
+            <span class="history-stat-value history-stat-points">${summary.total_points}</span>
+            <span class="history-stat-label">Points</span>
+          </div>
+          <div class="history-stat">
+            <span class="history-stat-value">${summary.games_predicted}</span>
+            <span class="history-stat-label">Games</span>
+          </div>
+          <div class="history-stat">
+            <span class="history-stat-value">${summary.points_per_prediction.toFixed(2)}</span>
+            <span class="history-stat-label">Avg</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Separate completed and upcoming
+    const completed = data.predictions.filter(p => p.final_home_score !== null);
+    const upcoming = data.predictions.filter(p => p.final_home_score === null);
+
+    if (data.predictions.length === 0) {
+      bodyEl.innerHTML = `
+        <div class="empty-state" style="padding: 32px 0;">
+          <p class="empty-state-title">No predictions yet</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+
+    if (completed.length > 0) {
+      html += `
+        <div class="history-section-label">Results</div>
+        <div class="history-list">
+          ${completed.map(p => {
+            const ptsClass = p.points === 6 ? 'pts-6' : p.points === 3 ? 'pts-3' : 'pts-0';
+            return `
+              <div class="history-row">
+                <div class="history-match">${escapeHtml(p.home_team)} vs ${escapeHtml(p.away_team)}</div>
+                <div class="history-scores">
+                  <span class="history-prediction">${p.predicted_home_score}-${p.predicted_away_score}</span>
+                  <span class="history-vs">|</span>
+                  <span class="history-final">${p.final_home_score}-${p.final_away_score}</span>
+                </div>
+                <div class="history-points ${ptsClass}">${p.points} pts</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    if (upcoming.length > 0) {
+      html += `
+        <div class="history-section-label">Upcoming</div>
+        <div class="history-list">
+          ${upcoming.map(p => `
+            <div class="history-row">
+              <div class="history-match">${escapeHtml(p.home_team)} vs ${escapeHtml(p.away_team)}</div>
+              <div class="history-scores">
+                <span class="history-prediction">${p.predicted_home_score}-${p.predicted_away_score}</span>
+                <span class="history-vs">|</span>
+                <span class="history-final">--</span>
+              </div>
+              <div class="history-points pts-pending">--</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    bodyEl.innerHTML = html;
+
+  } catch (error) {
+    console.error('Error loading player history:', error);
+    bodyEl.innerHTML = '<div class="error-message">Failed to load prediction history</div>';
+  }
+}
+
+function hidePlayerHistoryModal() {
+  document.getElementById('player-history-modal').classList.remove('active');
 }
