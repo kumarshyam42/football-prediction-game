@@ -73,7 +73,7 @@ Leaderboard ranks by points per prediction, then total points.
 
 - **Home:** `http://localhost:3000`
 - **Game Detail:** `http://localhost:3000/game.html?id={gameId}`
-- **Admin:** `http://localhost:3000/admin.html?key={ADMIN_SECRET}`
+- **Admin:** `http://localhost:3000/admin.html` (enter admin key when prompted)
 
 ## Deployment
 
@@ -95,11 +95,13 @@ Leaderboard ranks by points per prediction, then total points.
 
 ## Admin Usage
 
-Access the admin panel at `/admin.html?key={ADMIN_SECRET}` to:
+Access the admin panel at `/admin.html` and enter your admin key when prompted. From there you can:
 
 - Create new games (set teams and kickoff time)
 - Enter final scores for completed games
-- Delete games
+- Edit or delete games
+
+The admin key is sent via HTTP header (`x-admin-key`), never in the URL.
 
 ## Project Structure
 
@@ -111,13 +113,25 @@ Access the admin panel at `/admin.html?key={ADMIN_SECRET}` to:
 │   ├── games/
 │   │   └── [id]/
 │   │       ├── index.js   # Delete game
-│   │       └── score.js   # Update final score
+│   │       ├── score.js   # Update final score
+│   │       └── update.js  # Edit game details
 │   ├── predictions.js     # Prediction CRUD endpoints
-│   └── leaderboard.js     # Leaderboard calculation
+│   ├── leaderboard.js     # Leaderboard calculation
+│   ├── player-predictions.js  # Per-player prediction history
+│   └── admin/             # Admin-only endpoints
+│       ├── setup.js       # Database schema init
+│       ├── migrate.js     # Schema migrations
+│       ├── cleanup.js     # Database cleanup
+│       └── diagnose.js    # Database diagnostics
+├── lib/                   # Shared modules (outside /api/ to avoid function limit)
+│   └── auth.js            # Admin authentication (timing-safe)
 ├── public/                # Static frontend files
 │   ├── index.html         # Home page
 │   ├── game.html          # Game detail page
 │   ├── admin.html         # Admin panel
+│   ├── setup.html         # Database setup UI
+│   ├── migrate.html       # Database migration UI
+│   ├── cleanup.html       # Database cleanup UI
 │   ├── styles.css         # Dark mode styles
 │   ├── app.js             # Home page JavaScript
 │   ├── game-detail.js     # Game detail JavaScript
@@ -125,7 +139,7 @@ Access the admin panel at `/admin.html?key={ADMIN_SECRET}` to:
 ├── db/
 │   └── schema.sql         # Database schema
 ├── package.json
-├── vercel.json
+├── vercel.json            # Routing, security headers, CORS
 └── README.md
 ```
 
