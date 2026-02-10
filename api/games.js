@@ -1,5 +1,5 @@
 const { sql } = require('@vercel/postgres');
-const { isAdmin } = require('./lib/auth');
+const { isAdmin } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
   try {
