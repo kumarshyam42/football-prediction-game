@@ -1,4 +1,5 @@
 const { sql } = require('@vercel/postgres');
+const { isAdmin } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
   try {
@@ -82,8 +83,35 @@ module.exports = async function handler(req, res) {
       `;
       return res.status(200).json({ prediction: prediction[0] });
 
+    } else if (req.method === 'DELETE') {
+      // Admin-only: delete a specific prediction by ID
+      if (!isAdmin(req)) {
+        return res.status(403).json({ error: 'Unauthorized - admin key required' });
+      }
+
+      const { id } = req.query;
+
+      if (!id) {
+        return res.status(400).json({ error: 'Prediction id is required' });
+      }
+
+      const predictionId = parseInt(id, 10);
+      if (isNaN(predictionId)) {
+        return res.status(400).json({ error: 'Invalid prediction id' });
+      }
+
+      const { rowCount } = await sql`
+        DELETE FROM predictions WHERE id = ${predictionId}
+      `;
+
+      if (rowCount === 0) {
+        return res.status(404).json({ error: 'Prediction not found' });
+      }
+
+      return res.status(200).json({ success: true, deleted: predictionId });
+
     } else {
-      res.setHeader('Allow', ['GET', 'POST']);
+      res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
       return res.status(405).json({ error: `Method ${req.method} not allowed` });
     }
 
