@@ -4,9 +4,36 @@ const { isAdmin } = require('../lib/auth');
 module.exports = async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      // Get all predictions for a game
-      const { gameId } = req.query;
+      const { gameId, recent } = req.query;
 
+      // Admin-only: get last 20 predictions across all games
+      if (recent === 'true') {
+        if (!isAdmin(req)) {
+          return res.status(403).json({ error: 'Unauthorized - admin key required' });
+        }
+
+        const { rows } = await sql`
+          SELECT
+            p.id,
+            p.predicted_home_score,
+            p.predicted_away_score,
+            p.created_at,
+            p.updated_at,
+            pl.name as player_name,
+            g.home_team,
+            g.away_team,
+            g.kickoff_datetime
+          FROM predictions p
+          JOIN players pl ON p.player_id = pl.id
+          JOIN games g ON p.game_id = g.id
+          ORDER BY p.updated_at DESC
+          LIMIT 20
+        `;
+
+        return res.status(200).json({ predictions: rows });
+      }
+
+      // Get all predictions for a game
       if (!gameId) {
         return res.status(400).json({ error: 'gameId is required' });
       }
