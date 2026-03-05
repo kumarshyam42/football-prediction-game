@@ -1,4 +1,5 @@
 const { sql } = require('@vercel/postgres');
+const { isAdmin } = require('../lib/auth');
 
 module.exports = async function handler(req, res) {
   try {
@@ -46,8 +47,36 @@ module.exports = async function handler(req, res) {
 
       return res.status(201).json({ player: newPlayer[0], created: true });
 
+    } else if (req.method === 'DELETE') {
+      // Admin-only: delete a player by ID
+      if (!isAdmin(req)) {
+        return res.status(403).json({ error: 'Unauthorized - admin key required' });
+      }
+
+      const { id } = req.query;
+
+      if (!id) {
+        return res.status(400).json({ error: 'Player id is required' });
+      }
+
+      const playerId = parseInt(id, 10);
+      if (isNaN(playerId)) {
+        return res.status(400).json({ error: 'Invalid player id' });
+      }
+
+      // CASCADE will handle deleting their predictions too
+      const { rowCount } = await sql`
+        DELETE FROM players WHERE id = ${playerId}
+      `;
+
+      if (rowCount === 0) {
+        return res.status(404).json({ error: 'Player not found' });
+      }
+
+      return res.status(200).json({ success: true, deleted: playerId });
+
     } else {
-      res.setHeader('Allow', ['GET', 'POST']);
+      res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
       return res.status(405).json({ error: `Method ${req.method} not allowed` });
     }
 
